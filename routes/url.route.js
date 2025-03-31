@@ -59,12 +59,9 @@ router.get("/:short", async (req, res) => {
   }
 
   let urlExist = await redis.get(short);
-  console.log(urlExist);
 
   if (urlExist) {
-    console.log("redi");
-
-    return res.send(urlExist);
+    return res.redirect(urlExist);
   }
 
   urlExist = await Url.findOne({ short });
@@ -75,7 +72,7 @@ router.get("/:short", async (req, res) => {
 
   await redis.set(short, urlExist.long, "EX", 60);
 
-  return res.send(urlExist.long);
+  return res.redirect(urlExist.long);
 });
 
 module.exports = router;
