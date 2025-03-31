@@ -17,6 +17,17 @@ const concatUrl = (short) => {
   return tinyUrl + short;
 };
 
+const generateShortUrl = () => {
+  let short = "";
+
+  for (let i = 0; i < shortLength; i++) {
+    const random = Math.round(Math.random() * alphaNumeric.length);
+    short += alphaNumeric[random];
+  }
+
+  return short;
+};
+
 router.post("/", async (req, res) => {
   try {
     const { url } = req.body;
@@ -35,17 +46,18 @@ router.post("/", async (req, res) => {
       return res.send(concatUrl(urlExist.short));
     }
 
+    let exists = false;
+
     let short = "";
+    do {
+      short = generateShortUrl();
+      exists = await Url.exists({ short });
+    } while (exists);
 
-    for (let i = 0; i < shortLength; i++) {
-      const random = Math.round(Math.random() * alphaNumeric.length);
-      short += alphaNumeric[random];
-    }
-
-    const savedUrl = new Url({ long: url, short: short });
+    const savedUrl = new Url({ long: url, short });
     await savedUrl.save();
-    await redis.set(short, long, "EX", 60);
-    return res.send(concatUrl(urlExist.short));
+    await redis.set(short, url, "EX", 60);
+    return res.send(concatUrl(savedUrl.short));
   } catch (error) {
     return res.send("Invalid Url");
   }
